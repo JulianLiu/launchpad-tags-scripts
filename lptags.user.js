@@ -2,7 +2,7 @@
 // @name         Launchpad bug tags helper
 // @namespace    https://launchpad.net/~julian-liu
 // @version      0.1
-// @description  LP bugs helper
+// @description  LP bugs tags helper
 // @author       Julian Liu
 // @match        https://bugs.launchpad.net/*/+filebug
 // @grant        none
@@ -22,16 +22,16 @@ function interceptorSetup() {
 }
 
 function interceptor(e) {
-	var frm = e ? e.target : this;
+    var frm = e ? e.target : this;
 
     tagNode = frm.elements['field.tags'];
 
-	if (tagNode.value.length === 0) {
-		var check = confirm('No tags entered. Are you sure to submit this bug without any tag?');
-		if (!check) {
-			return;
-		}
-	}
+    if (tagNode.value.length === 0) {
+        var check = confirm('No tags entered. Are you sure to submit this bug without any tag?');
+        if (!check) {
+                return;
+        }
+    }
     // submit default is prevented, so we add new submit node instead
     submitNode = document.createElement('input');
     submitNode.name = 'field.actions.submit_bug';
@@ -44,75 +44,73 @@ function interceptor(e) {
 function addTagStyle() {
     var menuStyle = `
 #wrap {
-	width: 100px;
-	height: 50px;
-    padding-bottom: 10px;
-	margin: 0; /* Ensures there is no space between sides of the screen and the menu */
-	z-index: 1; /* Makes sure that your menu remains on top of other page elements */
-	//position: fixed;
-	background-color: GhostWhite;
-	}
+width: 100px;
+height: 50px;
+padding-bottom: 10px;
+margin: 0;  /* Ensures there is no space between sides of the screen and the menu */
+z-index: 1; /* Makes sure that your menu remains on top of other page elements */
+background-color: GhostWhite;
+}
 .navbar	{
-	height: 50px;
-    padding: 0;
-    padding-bottom: 10px;
-	margin: 0;
-	//position: fixed; /* Ensures that the menu doesn’t affect other elements */
-	border-right: 1px solid #fafaff;
-    z-index: 12;
-	}
-.navbar li 	{
-            padding-bottom: 10px;
-			height: auto;
-			width: 100px;  /* Each menu item is 100px wide */
-			/*float: left;   This lines up the menu items horizontally */
-            object-position: top;
-			text-align: center;  /* All text is placed in the center of the box */
-			list-style: none;  /* Removes the default styling (bullets) for the list */
-			font: normal bold 12px/1.2em Arial, Verdana, Helvetica;
-			padding: 0;
-			margin: 0;
-			background-color: GhostWhite;
-            }
-.navbar a	{
-		padding: 18px 0;  /* Adds a padding on the top and bottom so the text appears centered vertically */
-		border-left: 1px solid #fafaff; /* Creates a border in a slightly lighter shade of blue than the background.  Combined with the right border, this creates a nice effect. */
-		border-right: 1px solid #fafaff; /* Creates a border in a slightly darker shade of blue than the background.  Combined with the left border, this creates a nice effect. */
-		text-decoration: none;  /* Removes the default hyperlink styling. */
-		color: #000; /* Text color is black */
-		display: block;
-		}
+height: 50px;
+padding: 0;
+padding-bottom: 10px;
+margin: 0;
+border-right: 1px solid #fafaff;
+z-index: 12;
+}
+.navbar li {
+padding-bottom: 10px;
+height: auto;
+width: 100px;  /* Each menu item is 100px wide */
+/*float: left;   This lines up the menu items horizontally */
+object-position: top;
+text-align: center;  /* All text is placed in the center of the box */
+list-style: none;  /* Removes the default styling (bullets) for the list */
+font: normal bold 12px/1.2em Arial, Verdana, Helvetica;
+padding: 0;
+margin: 0;
+background-color: GhostWhite;
+}
+.navbar a {
+padding: 18px 0;  /* Adds a padding on the top and bottom so the text appears centered vertically */
+border-left: 1px solid #fafaff;  /* Creates a border in a slightly lighter shade of blue than the background.  Combined with the right border, this creates a nice effect. */
+border-right: 1px solid #fafaff; /* Creates a border in a slightly darker shade of blue than the background.  Combined with the left border, this creates a nice effect. */
+text-decoration: none;  /* Removes the default hyperlink styling. */
+color: #000; /* Text color is black */
+display: block;
+}
 .navbar li:hover, a:hover {
-    background-color: #e5f3ff;
+background-color: #e5f3ff;
 }
-.navbar li ul 	{
-		display: none; /* Hides the drop-down menu */
-		margin: 0; /* Aligns drop-down box underneath the menu item */
-		padding: 0; /* Aligns drop-down box underneath the menu item */
-        margin-left: 100px;
-        float:left;
-        margin-top: -45px;
-        height: 0;
-		}
-.navbar li:hover ul 	{
-                        display: block; /* Displays the drop-down box when the menu item is hovered over */
-                        z-index: 12;
-                        padding-left: 1px;
-                        }
+.navbar li ul {
+display: none; /* Hides the drop-down menu */
+margin: 0; /* Aligns drop-down box underneath the menu item */
+padding: 0; /* Aligns drop-down box underneath the menu item */
+margin-left: 100px;
+float:left;
+margin-top: -45px;
+height: 0;
+}
+.navbar li:hover ul {
+display: block; /* Displays the drop-down box when the menu item is hovered over */
+z-index: 12;
+padding-left: 1px;
+}
 .navbar li ul li {
-    background-color: #e1e1e7;
-    width: 150px;
-    font: normal 12px/1.2em Arial, Verdana, Helvetica;
+background-color: #e1e1e7;
+width: 150px;
+font: normal 12px/1.2em Arial, Verdana, Helvetica;
 }
-.navbar li ul li a 	{
-		border-left: 1px solid #0026ff;
-		border-right: 1px solid #0026ff;
-		border-top: 1px solid #0026ff;
-        z-index: 1001;
-		}
+.navbar li ul li a {
+border-left: 1px solid #0026ff;
+border-right: 1px solid #0026ff;
+border-top: 1px solid #0026ff;
+z-index: 1001;
+}
 .navbar li ul li:hover {
-    background-color: #d1d7e8;
-    z-index: 1000;
+background-color: #d1d7e8;
+z-index: 1000;
 }
     `;
 
