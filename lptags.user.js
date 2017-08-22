@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         @name Launchpad bug tags helper
+// @name         Launchpad bug tags helper
 // @namespace    https://launchpad.net/~julian-liu
 // @version      0.1
 // @description  LP bugs helper
