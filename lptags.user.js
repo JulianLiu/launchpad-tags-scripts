@@ -112,6 +112,9 @@ z-index: 1001;
 background-color: #d1d7e8;
 z-index: 1000;
 }
+.checkedmark:before {
+content: '✓';
+}
     `;
 
     var css = document.createElement("style");
@@ -120,9 +123,19 @@ z-index: 1000;
     document.body.appendChild(css);
 }
 
-function appendTagValue(tag) {
+function toggleTagValue(tag) {
     var tagNode = document.getElementById('filebug-form').elements['field.tags'];
-    tagNode.value = tagNode.value + ' ' + tag;
+    var liNode = document.getElementById('taglist.' + tag);
+
+    if (tagNode.value.indexOf(tag) !== -1) {
+        tagNode.value = tagNode.value.replace(' ' + tag, '');
+        tagNode.value = tagNode.value.replace(tag, '');
+        liNode.className = '';
+    }
+    else {
+        tagNode.value = tagNode.value + ' ' + tag;
+        liNode.className = 'checkedmark';
+    }
 }
 
 function insertAfter(newNode, referenceNode) {
@@ -153,13 +166,15 @@ function tagList() {
             var liItem = document.createElement('li');
             ulLevel2.appendChild(liItem);
             liItem.innerHTML = liItem.innerHTML + allTags[key][i];
+            liItem.id = 'taglist.' + allTags[key][i];
             (function(value){
                 liItem.addEventListener("click", function() {
-                    appendTagValue(value);
+                    toggleTagValue(value);
                 }, false);})(allTags[key][i]);
         }
         liCategory.appendChild(ulLevel2);
     });
+    document.getElementById('filebug-form').elements['field.tags'].size = '40';
 
     var targetNode = document.getElementById('filebug-form').elements['field.tags'].parentNode.parentNode.parentNode;
     insertAfter(tagDiv, targetNode);
