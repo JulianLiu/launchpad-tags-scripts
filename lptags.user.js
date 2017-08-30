@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         Launchpad bug tags helper
 // @namespace    https://launchpad.net/~julian-liu
-// @version      0.3
+// @version      0.4
 // @description  LP bugs tags helper
 // @author       Julian Liu
 // @match        https://bugs.launchpad.net/*/+filebug
+// @match        https://bugs.launchpad.net/*/+bug/*
 // @connect      cedelivery.access.ly
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
@@ -158,6 +159,7 @@ function readExternalTags(url, callback) {
 function tagList() {
     // ?q= to avoid cache
     var extTagUrl = 'https://cedelivery.access.ly/tag.json?q=';
+    var intTagurl = 'https://bugs.launchpad.net/somerville/+bug/1713956?q=';
     var pubTags = {
         ihv: ['ihv-amd', 'ihv-broadcom', 'ihv-intel', 'ihv-nvidia', 'ihv-realtek', 'ihv-related'],
         status: ['task', 'staging', 'waiting', 'cqa', 'cqa-verified']
@@ -199,9 +201,34 @@ function tagList() {
     appendCategory(pubTags);
     addTagStyle();
 
-    readExternalTags(extTagUrl, function(text){
+    loadBugDescription(intTagurl, function(text){
         var data = JSON.parse(text);
         appendCategory(data);
+    });
+}
+
+function loadExtHtml(url, callback) {
+    var ajaxReq = new XMLHttpRequest();
+    ajaxReq.open('GET', url, true);
+    ajaxReq.onreadystatechange = function() {
+        if (ajaxReq.readyState === 4 && ajaxReq.status == '200') {
+            callback(ajaxReq.responseText);
+        }
+    };
+    ajaxReq.send(null);
+}
+
+function loadBugDescription(url, callback) {
+    loadExtHtml(url, function(text){
+        var doc = document.implementation.createHTMLDocument("");
+        doc.write(text);
+        var children = doc.getElementById('edit-description').childNodes;
+        for (var i=0, len=children.length; i < len; i++){
+            if (children[i].className == 'yui3-editable_text-text'){
+                callback(children[i].textContent);
+                break;
+            }
+        }
     });
 }
 
@@ -209,6 +236,12 @@ function tagList() {
     'use strict';
 
     //debugger;
-    tagList();
-    interceptorSetup();
+    var curUrl = window.location.href;
+    if (/\+filebug$/.test(curUrl)) {
+        tagList();
+        interceptorSetup();
+    }
+    else {
+        console.log('');
+    }
 })();
