@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name         Launchpad bug tags helper
 // @namespace    https://launchpad.net/~julian-liu
-// @version      0.2
+// @version      0.3
 // @description  LP bugs tags helper
 // @author       Julian Liu
 // @match        https://bugs.launchpad.net/*/+filebug
-// @grant        none
+// @connect      cedelivery.access.ly
+// @grant        GM_xmlhttpRequest
 // ==/UserScript==
 
 function interceptorSetup() {
@@ -142,43 +143,66 @@ function insertAfter(newNode, referenceNode) {
     referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
 }
 
+function readExternalTags(url, callback) {
+    GM_xmlhttpRequest({
+        method: "GET",
+        url: url,
+        onload: function (response) {
+            if (response.status == 200) {
+                callback(response.responseText);
+            }
+        }
+    });
+}
+
 function tagList() {
-    var allTags = {
-        function: ['wifi', 'bluetooth', 'wwan', 'hibernate', 'battery', 'graphic', 'audio', 'hotkey', 'backlight'],
-        platform: ['armani-kbl-15', 'astro-mlk-14-15', 'breckenridge-mlk-kbl', 'loki-kblr', 'steamboat-mlk', 'turis-mlk-glk', 'vegas-mlk-glk'],
-        hwe: ['hwe-audio', 'hwe-bluetooth', 'hwe-cert-risk', 'hwe-firmware', 'hwe-fwts-error', 'hwe-graphics', 'hwe-hotkeys', 'hwe-needs-public-bug', 'hwe-suspend-resume'],
-        ihv: ['ihv-amd', 'ihv-intel', 'ihv-nvidia', 'ihv-realtek', 'ihv-related'],
-        status: ['task', 'staging', 'waiting', 'cqa-verified']
+    // ?q= to avoid cache
+    var extTagUrl = 'https://cedelivery.access.ly/tag.json?q=';
+    var pubTags = {
+        ihv: ['ihv-amd', 'ihv-broadcom', 'ihv-intel', 'ihv-nvidia', 'ihv-realtek', 'ihv-related'],
+        status: ['task', 'staging', 'waiting', 'cqa', 'cqa-verified']
     };
     var tagDiv = document.createElement('div');
     tagDiv.id = 'wrap';
     var ulLevel1 = document.createElement('ul');
     ulLevel1.className = 'navbar';
+    ulLevel1.id = 'navbartop';
     tagDiv.appendChild(ulLevel1);
 
-    Object.keys(allTags).forEach(function(key, index) {
-        var liCategory = document.createElement('li');
-        ulLevel1.appendChild(liCategory);
-        liCategory.innerHTML = liCategory.innerHTML + key + ' →';
+    function appendCategory(tagData) {
+        var topNode = document.getElementById('navbartop');
 
-        var ulLevel2 = document.createElement('ul');
-        for (var i = 0; i < allTags[key].length; i++) {
-            var liItem = document.createElement('li');
-            ulLevel2.appendChild(liItem);
-            liItem.innerHTML = liItem.innerHTML + allTags[key][i];
-            liItem.id = 'taglist.' + allTags[key][i];
-            (function(value){
-                liItem.addEventListener("click", function() {
-                    toggleTagValue(value);
-                }, false);})(allTags[key][i]);
-        }
-        liCategory.appendChild(ulLevel2);
-    });
+        Object.keys(tagData).forEach(function(key, index) {
+            var liCategory = document.createElement('li');
+            topNode.appendChild(liCategory);
+            liCategory.innerHTML = liCategory.innerHTML + key + ' →';
+
+            var ulLevel2 = document.createElement('ul');
+            for (var i = 0; i < tagData[key].length; i++) {
+                var liItem = document.createElement('li');
+                ulLevel2.appendChild(liItem);
+                liItem.innerHTML = liItem.innerHTML + tagData[key][i];
+                liItem.id = 'taglist.' + tagData[key][i];
+                (function(value){
+                    liItem.addEventListener("click", function() {
+                        toggleTagValue(value);
+                    }, false);})(tagData[key][i]);
+            }
+            liCategory.appendChild(ulLevel2);
+        });
+    }
+
     document.getElementById('filebug-form').elements['field.tags'].size = '40';
 
     var targetNode = document.getElementById('filebug-form').elements['field.tags'].parentNode.parentNode.parentNode;
     insertAfter(tagDiv, targetNode);
+    appendCategory(pubTags);
     addTagStyle();
+
+    readExternalTags(extTagUrl, function(text){
+        var data = JSON.parse(text);
+        appendCategory(data);
+    });
 }
 
 (function() {
