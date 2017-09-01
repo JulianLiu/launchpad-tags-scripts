@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Launchpad bug tags helper
 // @namespace    https://launchpad.net/~julian-liu
-// @version      0.5
+// @version      0.6
 // @description  LP bugs tags helper
 // @author       Julian Liu
 // @match        https://bugs.launchpad.net/*/+filebug
@@ -189,7 +189,7 @@ function tagList(formId, tagElement, targetNode) {
     var intTagurl = 'https://bugs.launchpad.net/somerville/+bug/1713956?q=';
     var pubTags = {
         ihv: ['ihv-amd', 'ihv-broadcom', 'ihv-intel', 'ihv-nvidia', 'ihv-realtek', 'ihv-related'],
-        status: ['task', 'staging', 'waiting', 'cqa', 'cqa-verified']
+        status: ['task', 'staging', 'waiting', 'cqa-verified', 'not-fixed-at-gm']
     };
     var tagDiv = document.createElement('div');
     tagDiv.id = 'wrap';
@@ -226,6 +226,7 @@ function tagList(formId, tagElement, targetNode) {
     addTagStyle();
 
     loadBugDescription(intTagurl, function(text){
+        console.log('External data loaded');
         var data = JSON.parse(text);
         appendCategory(data.tags);
         loadPlatformPlan(data.plan);
@@ -276,11 +277,19 @@ function setupOberver() {
         });
     });
 
-    // bind dom insert event first, since the target element we want to
-    // listen for attribute change is not existed yet
-    childObserver.observe(document.getElementById('bug-tags'),  {
-        childList: true
-    });
+    var formNode = document.getElementById('tags-form');
+    if (formNode === null) {
+        // bind dom insert event first, since the target element we want to
+        // listen for attribute change is not existed yet
+        childObserver.observe(document.getElementById('bug-tags'),  {
+            childList: true
+        });
+    }
+    else {
+        attrObserver.observe(formNode,  {
+            attributes: true,
+        });
+    }
 }
 
 function loadPlatformPlan(data) {
@@ -302,7 +311,10 @@ function loadPlatformPlan(data) {
                 for (var milestone in data[tagNameTrimmed]) {
                     planContent = planContent + `[${milestone}](${data[tagNameTrimmed][milestone]}), `;
                 }
-                planList.textContent = planContent;
+                if (planContent.length > 1) {
+                    // exclude last ', '
+                    planList.textContent = planContent.substr(0, planContent.length - 2);
+                }
 
                 planHead.textContent = 'Plan: ';
                 tagsDiv.appendChild(planDiv);
