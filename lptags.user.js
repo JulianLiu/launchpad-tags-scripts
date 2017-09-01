@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Launchpad bug tags helper
 // @namespace    https://launchpad.net/~julian-liu
-// @version      0.4
+// @version      0.5
 // @description  LP bugs tags helper
 // @author       Julian Liu
 // @match        https://bugs.launchpad.net/*/+filebug
@@ -103,6 +103,8 @@ padding-left: 1px;
 background-color: #e1e1e7;
 width: 150px;
 font: normal 12px/1.2em Arial, Verdana, Helvetica;
+position: relative;
+z-index: 999;
 }
 .navbar li ul li a {
 border-left: 1px solid #0026ff;
@@ -125,8 +127,8 @@ content: '✓';
     document.body.appendChild(css);
 }
 
-function toggleTagValue(tag) {
-    var tagNode = document.getElementById('filebug-form').elements['field.tags'];
+function toggleTagValue(formId, tagElement, tag) {
+    var tagNode = document.getElementById(formId).elements[tagElement];
     var liNode = document.getElementById('taglist.' + tag);
 
     if (tagNode.value.indexOf(tag) !== -1) {
@@ -137,6 +139,31 @@ function toggleTagValue(tag) {
     else {
         tagNode.value = tagNode.value + ' ' + tag;
         liNode.className = 'checkedmark';
+    }
+}
+
+// This function is used by tag editing page only
+// Filing new bug page will always show tag listing
+function toggleTagHidden() {
+    var divNode = document.getElementById('wrap');
+    if (divNode.className === 'hidden') {
+        divNode.className = '';
+        divNode.style.display = 'inline-block';
+
+        var inputNode = document.getElementById('tags-form').elements['tag-input'];
+        inputNode.size = 30;
+
+        // iterate tag content to show correct checkmark
+        inputNode.value.split(' ').forEach(function(tagName) {
+            var liNode = document.getElementById('taglist.' + tagName);
+            if (liNode !== null) {
+                liNode.className = 'checkedmark';
+            }
+        });
+    }
+    else {
+        divNode.className = 'hidden';
+        divNode.style.display = '';
     }
 }
 
@@ -156,7 +183,7 @@ function readExternalTags(url, callback) {
     });
 }
 
-function tagList() {
+function tagList(formId, tagElement, targetNode) {
     // ?q= to avoid cache
     var extTagUrl = 'https://cedelivery.access.ly/tag.json?q=';
     var intTagurl = 'https://bugs.launchpad.net/somerville/+bug/1713956?q=';
@@ -187,23 +214,21 @@ function tagList() {
                 liItem.id = 'taglist.' + tagData[key][i];
                 (function(value){
                     liItem.addEventListener("click", function() {
-                        toggleTagValue(value);
+                        toggleTagValue(formId, tagElement, value);
                     }, false);})(tagData[key][i]);
             }
             liCategory.appendChild(ulLevel2);
         });
     }
 
-    document.getElementById('filebug-form').elements['field.tags'].size = '40';
-
-    var targetNode = document.getElementById('filebug-form').elements['field.tags'].parentNode.parentNode.parentNode;
     insertAfter(tagDiv, targetNode);
     appendCategory(pubTags);
     addTagStyle();
 
     loadBugDescription(intTagurl, function(text){
         var data = JSON.parse(text);
-        appendCategory(data);
+        appendCategory(data.tags);
+        loadPlatformPlan(data.plan);
     });
 }
 
@@ -232,16 +257,83 @@ function loadBugDescription(url, callback) {
     });
 }
 
+function setupOberver() {
+    var attrObserver = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.attributeName === 'class') {
+                toggleTagHidden();
+            }
+        });
+    });
+
+    var childObserver = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'childList') {
+                attrObserver.observe(document.getElementById('tags-form'),  {
+                    attributes: true,
+                });
+            }
+        });
+    });
+
+    // bind dom insert event first, since the target element we want to
+    // listen for attribute change is not existed yet
+    childObserver.observe(document.getElementById('bug-tags'),  {
+        childList: true
+    });
+}
+
+function loadPlatformPlan(data) {
+    var tagsDiv = document.getElementById('bug-tags');
+    if (tagsDiv !== null) {
+        var planDiv = document.createElement('div');
+        var planHead = document.createElement('span');
+        var planList = document.createElement('span');
+        planDiv.id = 'bug-plan';
+
+        var planContent = '';
+        document.getElementById('tag-list').textContent.split(' ').forEach(function(tagName) {
+            var tagNameTrimmed = tagName.trim();
+            if (tagNameTrimmed.length > 0 && tagNameTrimmed in data) {
+                var platformLink = document.createElement('a');
+                platformLink.href = '/' + window.location.href.split('/')[3] + '/+bugs?field.tag=' + tagNameTrimmed;
+                platformLink.textContent = tagNameTrimmed;
+                planContent = ' ';
+                for (var milestone in data[tagNameTrimmed]) {
+                    planContent = planContent + `[${milestone}](${data[tagNameTrimmed][milestone]}), `;
+                }
+                planList.textContent = planContent;
+
+                planHead.textContent = 'Plan: ';
+                tagsDiv.appendChild(planDiv);
+                planDiv.appendChild(planHead);
+                planDiv.appendChild(platformLink);
+                planDiv.appendChild(planList);
+            }
+        });
+    }
+}
+
 (function() {
     'use strict';
 
     //debugger;
+    var anchorNode, tagNode;
     var curUrl = window.location.href;
     if (/\+filebug$/.test(curUrl)) {
-        tagList();
+        anchorNode = document.getElementById('filebug-form').elements['field.tags'].parentNode.parentNode.parentNode;
+        tagNode = document.getElementById('filebug-form').elements['field.tags'];
+
+        // enlarge text input size
+        tagNode.size = '40';
+        tagList('filebug-form', 'field.tags', anchorNode);
         interceptorSetup();
     }
     else {
-        console.log('');
+        anchorNode = document.getElementById('bug-tags').childNodes[8];
+
+        tagList('tags-form', 'tag-input', anchorNode);
+        toggleTagHidden();
+        setupOberver();
     }
 })();
