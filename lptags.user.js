@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Launchpad bug tags helper
 // @namespace    https://launchpad.net/~julian-liu
-// @version      0.6
+// @version      0.7
 // @description  LP bugs tags helper
 // @author       Julian Liu
 // @match        https://bugs.launchpad.net/*/+filebug
@@ -247,7 +247,7 @@ function loadExtHtml(url, callback) {
 function loadBugDescription(url, callback) {
     loadExtHtml(url, function(text){
         var doc = document.implementation.createHTMLDocument("");
-        doc.write(text);
+        doc.documentElement.innerHTML = text;
         var children = doc.getElementById('edit-description').childNodes;
         for (var i=0, len=children.length; i < len; i++){
             if (children[i].className == 'yui3-editable_text-text'){
