@@ -2,7 +2,7 @@
 // @name         Launchpad bug tags helper
 // @namespace    https://launchpad.net/~julian-liu
 // @version      0.7
-// @description  LP bugs tags helper
+// @description  LP bugs and tags helper
 // @author       Julian Liu
 // @match        https://bugs.launchpad.net/*/+filebug
 // @match        https://bugs.launchpad.net/*/+bug/*
