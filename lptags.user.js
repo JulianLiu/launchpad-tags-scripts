@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Launchpad bug tags helper
 // @namespace    https://launchpad.net/~julian-liu
-// @version      0.8
+// @version      0.9
 // @description  LP bugs tags helper
 // @author       Julian Liu
 // @match        https://bugs.launchpad.net/*/+filebug
@@ -151,7 +151,7 @@ function toggleTagHidden() {
         divNode.style.display = 'inline-block';
 
         var inputNode = document.getElementById('tags-form').elements['tag-input'];
-        inputNode.size = 30;
+        inputNode.size = 40;
 
         // iterate tag content to show correct checkmark
         inputNode.value.split(' ').forEach(function(tagName) {
