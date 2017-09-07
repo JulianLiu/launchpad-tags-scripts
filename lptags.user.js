@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Launchpad bug tags helper
 // @namespace    https://launchpad.net/~julian-liu
-// @version      0.7
-// @description  LP bugs and tags helper
+// @version      0.8
+// @description  LP bugs tags helper
 // @author       Julian Liu
 // @match        https://bugs.launchpad.net/*/+filebug
 // @match        https://bugs.launchpad.net/*/+bug/*
@@ -297,17 +297,19 @@ function loadPlatformPlan(data) {
     if (tagsDiv !== null) {
         var planDiv = document.createElement('div');
         var planHead = document.createElement('span');
-        var planList = document.createElement('span');
+
         planDiv.id = 'bug-plan';
 
-        var planContent = '';
-        document.getElementById('tag-list').textContent.split(' ').forEach(function(tagName) {
+        for (let tagName of document.getElementById('tag-list').textContent.split(' ')) {
             var tagNameTrimmed = tagName.trim();
             if (tagNameTrimmed.length > 0 && tagNameTrimmed in data) {
+                var planList = document.createElement('span');
                 var platformLink = document.createElement('a');
+                var lineBreaker = document.createElement('br');
+                var planContent = '';
+
                 platformLink.href = '/' + window.location.href.split('/')[3] + '/+bugs?field.tag=' + tagNameTrimmed;
                 platformLink.textContent = tagNameTrimmed;
-                planContent = ' ';
                 for (var milestone in data[tagNameTrimmed]) {
                     planContent = planContent + `[${milestone}](${data[tagNameTrimmed][milestone]}), `;
                 }
@@ -316,13 +318,17 @@ function loadPlatformPlan(data) {
                     planList.textContent = planContent.substr(0, planContent.length - 2);
                 }
 
-                planHead.textContent = 'Plan: ';
-                tagsDiv.appendChild(planDiv);
-                planDiv.appendChild(planHead);
+                planDiv.appendChild(lineBreaker);
                 planDiv.appendChild(platformLink);
                 planDiv.appendChild(planList);
             }
-        });
+        }
+        if (planDiv.childNodes.length > 1) {
+            planHead.textContent = 'Plan: ';
+            // Insert head as first child
+            planDiv.insertAdjacentElement('afterbegin', planHead);
+            tagsDiv.appendChild(planDiv);
+        }
     }
 }
 
