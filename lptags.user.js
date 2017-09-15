@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Launchpad bug tags helper
 // @namespace    https://launchpad.net/~julian-liu
-// @version      0.9
+// @version      1.0
 // @description  LP bugs tags helper
 // @author       Julian Liu
 // @match        https://bugs.launchpad.net/*/+filebug
@@ -228,6 +228,9 @@ function tagList(formId, tagElement, targetNode) {
     loadBugDescription(intTagurl, function(text){
         console.log('External data loaded');
         var data = JSON.parse(text);
+        for (var keyname in data.tags) {
+            data.tags[keyname].sort();
+        }
         appendCategory(data.tags);
         loadPlatformPlan(data.plan);
     });
