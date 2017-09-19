@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Launchpad bug tags helper
 // @namespace    https://launchpad.net/~julian-liu
-// @version      1.0
+// @version      1.1
 // @description  LP bugs tags helper
 // @author       Julian Liu
 // @match        https://bugs.launchpad.net/*/+filebug
@@ -295,6 +295,33 @@ function setupOberver() {
     }
 }
 
+function addDueDate(data) {
+    var table = document.getElementById('affected-software');
+
+    for (var i = 1; i < table.rows.length; i = i + 2) {
+        if (table.rows[i].cells.length) {
+            // if not the first row of series
+            if (table.rows[i].cells[1].children.length > 1) {
+                var seriesName = table.rows[i].cells[1].children[1].innerHTML;
+
+                // Insert the due date at Hwe-* milestone td
+                if (seriesName.startsWith('Hwe-somerville')) {
+                    var milestoneCell = table.rows[i].cells[5];
+                    var dueDiv = document.createElement('div');
+                    while(milestoneCell.firstChild) {
+                        milestoneCell.removeChild(milestoneCell.firstChild);
+                    }
+                    var ievRegDate = new Date(data);
+                    // Due date is 7 days before IEV Reg To QA
+                    var dueDate = new Date(ievRegDate.getTime() - (7 * 24 * 60 * 60 * 1000));
+                    dueDiv.textContent = 'Due date: ' + dueDate.getFullYear() + '/' + (dueDate.getMonth() + 1) + '/' + dueDate.getDate();
+                    milestoneCell.appendChild(dueDiv);
+                }
+            }
+        }
+    }
+}
+
 function loadPlatformPlan(data) {
     var tagsDiv = document.getElementById('bug-tags');
     if (tagsDiv !== null) {
@@ -315,6 +342,9 @@ function loadPlatformPlan(data) {
                 platformLink.textContent = tagNameTrimmed;
                 for (var milestone in data[tagNameTrimmed]) {
                     planContent = planContent + `[${milestone}](${data[tagNameTrimmed][milestone]}), `;
+                    if (milestone == 'IEV Reg to QA') {
+                        addDueDate(data[tagNameTrimmed][milestone]);
+                    }
                 }
                 if (planContent.length > 1) {
                     // exclude last ', '
