@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Launchpad bug tags helper
 // @namespace    https://launchpad.net/~julian-liu
-// @version      1.1
+// @version      1.2
 // @description  LP bugs tags helper
 // @author       Julian Liu
 // @match        https://bugs.launchpad.net/*/+filebug
@@ -188,7 +188,7 @@ function tagList(formId, tagElement, targetNode) {
     var extTagUrl = 'https://cedelivery.access.ly/tag.json?q=';
     var intTagurl = 'https://bugs.launchpad.net/somerville/+bug/1713956?q=';
     var pubTags = {
-        ihv: ['ihv-amd', 'ihv-broadcom', 'ihv-intel', 'ihv-nvidia', 'ihv-realtek', 'ihv-related'],
+        ihv: ['ihv-amd', 'ihv-broadcom', 'ihv-intel', 'ihv-nvidia', 'ihv-realtek', 'ihv-qualcomm', 'ihv-emulex', 'ihv-alps', 'ihv-synaptics', 'ihv-unknown'],
         status: ['task', 'staging', 'waiting', 'cqa-verified', 'not-fixed-at-gm']
     };
     var tagDiv = document.createElement('div');
