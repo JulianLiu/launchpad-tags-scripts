@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Launchpad bug tags helper
 // @namespace    https://launchpad.net/~julian-liu
-// @version      1.3
+// @version      1.4
 // @description  LP bugs tags helper
 // @author       Julian Liu
 // @match        https://bugs.launchpad.net/*/+filebug
@@ -321,9 +321,13 @@ function addDueDate(data) {
                         milestoneCell.removeChild(milestoneCell.firstChild);
                     }
                     var ievRegDate = new Date(data);
+                    var nowDate = new Date();
                     // Due date is 7 days before IEV Reg To QA
                     var dueDate = new Date(ievRegDate.getTime() - (7 * 24 * 60 * 60 * 1000));
                     dueDiv.textContent = 'Due date: ' + dueDate.getFullYear() + '/' + (dueDate.getMonth() + 1) + '/' + dueDate.getDate();
+                    if (nowDate > dueDate) {
+                        dueDiv.style.color = 'Red';
+                    }
                     milestoneCell.appendChild(dueDiv);
                 }
             }
