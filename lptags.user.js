@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Launchpad bug tags helper
 // @namespace    https://launchpad.net/~julian-liu
-// @version      1.2
+// @version      1.3
 // @description  LP bugs tags helper
 // @author       Julian Liu
 // @match        https://bugs.launchpad.net/*/+filebug
@@ -146,9 +146,14 @@ function toggleTagValue(formId, tagElement, tag) {
 // Filing new bug page will always show tag listing
 function toggleTagHidden() {
     var divNode = document.getElementById('wrap');
+    var planNode = document.getElementById('timeline-container');
     if (divNode.className === 'hidden') {
         divNode.className = '';
         divNode.style.display = 'inline-block';
+        if (planNode !== null) {
+            planNode.className = 'hidden';
+            planNode.style.display = '';
+        }
 
         var inputNode = document.getElementById('tags-form').elements['tag-input'];
         inputNode.size = 40;
@@ -164,6 +169,10 @@ function toggleTagHidden() {
     else {
         divNode.className = 'hidden';
         divNode.style.display = '';
+        if (planNode !== null) {
+            planNode.className = 'yui3-widget yui3-timelinegraph';
+            planNode.style.display = 'block';
+        }
     }
 }
 
@@ -330,38 +339,73 @@ function loadPlatformPlan(data) {
 
         planDiv.id = 'bug-plan';
 
+        var timelineList = [];
+        var maxLandmarksLength = 0;
+
         for (let tagName of document.getElementById('tag-list').textContent.split(' ')) {
             var tagNameTrimmed = tagName.trim();
+            var timelineData = {
+                'is_development_focus': false,
+                'landmarks': [],
+                'name': tagNameTrimmed,
+                'status': 'Active Development',
+                'uri': ''
+            };
             if (tagNameTrimmed.length > 0 && tagNameTrimmed in data) {
-                var planList = document.createElement('span');
-                var platformLink = document.createElement('a');
-                var lineBreaker = document.createElement('br');
-                var planContent = '';
-
-                platformLink.href = '/' + window.location.href.split('/')[3] + '/+bugs?field.tag=' + tagNameTrimmed;
-                platformLink.textContent = tagNameTrimmed;
                 for (var milestone in data[tagNameTrimmed]) {
-                    planContent = planContent + `[${milestone}](${data[tagNameTrimmed][milestone]}), `;
+                    if (/.*Report$/.test(milestone)) {
+                        // skip * report date
+                        continue;
+                    }
+
                     if (milestone == 'IEV Reg to QA') {
                         addDueDate(data[tagNameTrimmed][milestone]);
                     }
-                }
-                if (planContent.length > 1) {
-                    // exclude last ', '
-                    planList.textContent = planContent.substr(0, planContent.length - 2);
+                    var landmarksData = {type: 'milestone', uri: ''};
+                    landmarksData.code_name = milestone;
+                    landmarksData.name = milestone + '(' + data[tagNameTrimmed][milestone].substring(5) + ')';
+                    landmarksData.date = data[tagNameTrimmed][milestone];
+                    timelineData.landmarks.unshift(landmarksData);
                 }
 
-                planDiv.appendChild(lineBreaker);
-                planDiv.appendChild(platformLink);
-                planDiv.appendChild(planList);
+                timelineList.push(timelineData);
+                maxLandmarksLength = Math.max(maxLandmarksLength, timelineData.landmarks.length);
             }
         }
-        if (planDiv.childNodes.length > 1) {
+        if (timelineList.length > 0) {
             planHead.textContent = 'Plan: ';
             // Insert head as first child
             planDiv.insertAdjacentElement('afterbegin', planHead);
             tagsDiv.appendChild(planDiv);
+
+            var timelineDiv = document.createElement('div');
+            timelineDiv.id = 'timeline-container';
+            timelineDiv.className = 'yui3-widget yui3-timelinegraph';
+            planDiv.appendChild(timelineDiv);
         }
+
+        // assume YUI is loaded by original page
+        LPJS.use('lp.registry.timeline', function (Y) {
+            if (timelineList.length === 0) {
+                return;
+            }
+            var container = Y.one('#timeline-container');
+            container.setStyle('display', 'block');
+            var config = {
+                timeline: timelineList,
+                boundingBox: container
+            };
+            var graph = new Y.lp.registry.timeline.TimelineGraph(config);
+            graph.render();
+            // zoom out graph by landmark counts
+            if (maxLandmarksLength > 5) {
+                graph.graph_scale /= 1.1;
+                graph.syncUI();
+            }
+
+            // reset fixed position
+            Y.all('.yui3-timelinegraph-zoom-box').setStyle('position', '');
+        });
     }
 }
 
