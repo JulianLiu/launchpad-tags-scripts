@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Launchpad bug tags helper
 // @namespace    https://launchpad.net/~julian-liu
-// @version      1.4
+// @version      1.5
 // @description  LP bugs tags helper
 // @author       Julian Liu
 // @match        https://bugs.launchpad.net/*/+filebug
@@ -282,9 +282,12 @@ function setupOberver() {
     var childObserver = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {
             if (mutation.type === 'childList') {
-                attrObserver.observe(document.getElementById('tags-form'),  {
-                    attributes: true,
-                });
+                var tagFormNode = document.getElementById('tags-form');
+                if (tagFormNode !== null) {
+                    attrObserver.observe(tagFormNode,  {
+                        attributes: true,
+                    });
+                }
             }
         });
     });
@@ -309,21 +312,38 @@ function addDueDate(data) {
 
     for (var i = 1; i < table.rows.length; i = i + 2) {
         if (table.rows[i].cells.length) {
+            var milestoneCell = table.rows[i].cells[5];
+            var dueDiv = document.createElement('div');
+            var aCanDate = new Date(data);
+            var nowDate = new Date();
+            var dueDate;
+
             // if not the first row of series
             if (table.rows[i].cells[1].children.length > 1) {
                 var seriesName = table.rows[i].cells[1].children[1].innerHTML;
 
                 // Insert the due date at Hwe-* milestone td
-                if (seriesName.startsWith('Hwe-somerville')) {
-                    var milestoneCell = table.rows[i].cells[5];
-                    var dueDiv = document.createElement('div');
+                if (seriesName.startsWith('Hwe-')) {
                     while(milestoneCell.firstChild) {
                         milestoneCell.removeChild(milestoneCell.firstChild);
                     }
-                    var ievRegDate = new Date(data);
-                    var nowDate = new Date();
-                    // Due date is 7 days before IEV Reg To QA
-                    var dueDate = new Date(ievRegDate.getTime() - (7 * 24 * 60 * 60 * 1000));
+                    // Due date is 14 days before A-CAN
+                    dueDate = new Date(aCanDate.getTime() - (14 * 24 * 60 * 60 * 1000));
+                    dueDiv.textContent = 'Due date: ' + dueDate.getFullYear() + '/' + (dueDate.getMonth() + 1) + '/' + dueDate.getDate();
+                    if (nowDate > dueDate) {
+                        dueDiv.style.color = 'Red';
+                    }
+                    milestoneCell.appendChild(dueDiv);
+                }
+            }
+            else {
+                var seriesMain = table.rows[i].cells[1].children[0].children[0].children[0].innerText;
+                if(seriesMain.startsWith('somerville')) {
+                    while(milestoneCell.firstChild) {
+                        milestoneCell.removeChild(milestoneCell.firstChild);
+                    }
+                    // Due date is 7 days before A-CAN
+                    dueDate = new Date(aCanDate.getTime() - (7 * 24 * 60 * 60 * 1000));
                     dueDiv.textContent = 'Due date: ' + dueDate.getFullYear() + '/' + (dueDate.getMonth() + 1) + '/' + dueDate.getDate();
                     if (nowDate > dueDate) {
                         dueDiv.style.color = 'Red';
@@ -362,13 +382,16 @@ function loadPlatformPlan(data) {
                         continue;
                     }
 
-                    if (milestone == 'IEV Reg to QA') {
+                    if (milestone == 'A-CAN') {
                         addDueDate(data[tagNameTrimmed][milestone]);
                     }
                     var landmarksData = {type: 'milestone', uri: ''};
                     landmarksData.code_name = milestone;
                     landmarksData.name = milestone + '(' + data[tagNameTrimmed][milestone].substring(5) + ')';
                     landmarksData.date = data[tagNameTrimmed][milestone];
+                    if (new Date() > new Date(landmarksData.date)) {
+                        landmarksData.type = 'release';
+                    }
                     timelineData.landmarks.unshift(landmarksData);
                 }
 
@@ -402,7 +425,7 @@ function loadPlatformPlan(data) {
             var graph = new Y.lp.registry.timeline.TimelineGraph(config);
             graph.render();
             // zoom out graph by landmark counts
-            if (maxLandmarksLength > 5) {
+            if (maxLandmarksLength > 6) {
                 graph.graph_scale /= 1.1;
                 graph.syncUI();
             }
