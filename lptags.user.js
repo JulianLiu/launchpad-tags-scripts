@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Launchpad bug tags helper
 // @namespace    https://launchpad.net/~julian-liu
-// @version      1.5
+// @version      1.6
 // @description  LP bugs tags helper
 // @author       Julian Liu
 // @match        https://bugs.launchpad.net/*/+filebug
@@ -391,6 +391,15 @@ function loadPlatformPlan(data) {
                     landmarksData.date = data[tagNameTrimmed][milestone];
                     if (new Date() > new Date(landmarksData.date)) {
                         landmarksData.type = 'release';
+                    }
+                    else {
+                        // check if there's no previous arrow in landmarks
+                        var arrows = timelineData.landmarks.filter(function(data){
+                            return data.type == 'arrow';
+                        });
+                        if (arrows.length === 0) {
+                            landmarksData.type = 'arrow';
+                        }
                     }
                     timelineData.landmarks.unshift(landmarksData);
                 }
