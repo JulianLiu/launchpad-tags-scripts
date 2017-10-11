@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Launchpad bug tags helper
 // @namespace    https://launchpad.net/~julian-liu
-// @version      1.6
+// @version      1.7
 // @description  LP bugs tags helper
 // @author       Julian Liu
 // @match        https://bugs.launchpad.net/*/+filebug
@@ -382,7 +382,7 @@ function loadPlatformPlan(data) {
                         continue;
                     }
 
-                    if (milestone == 'A-CAN') {
+                    if (milestone == 'A-CAN' || milestone == 'GM to QA') {
                         addDueDate(data[tagNameTrimmed][milestone]);
                     }
                     var landmarksData = {type: 'milestone', uri: ''};
