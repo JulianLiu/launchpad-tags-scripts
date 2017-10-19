@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Launchpad bug tags helper
 // @namespace    https://launchpad.net/~julian-liu
-// @version      2.0
+// @version      2.1
 // @description  LP bugs tags helper
 // @author       Julian Liu
 // @match        https://bugs.launchpad.net/*/+filebug
@@ -455,7 +455,7 @@ function hookBranchFilter() {
             readExternalTags(url, function(text){
                 console.log('Branch list loaded');
                 container = Y.one('#branches-table-listing');
-                obj = Y.Node.create('<div id="branch-filter">Filter: <input id="branch-filter-text" size=60 value=""></div>');
+                obj = Y.Node.create('<div id="branch-filter">Filter: <input id="branch-filter-text" size=60 placeholder="enter your search here, press enter to apply"></div>');
                 container.insert(obj, Y.one('#branch-batch-links'));
 
                 branch_list = JSON.parse(text)['oem-solutions-engineers'];
