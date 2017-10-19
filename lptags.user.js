@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Launchpad bug tags helper
 // @namespace    https://launchpad.net/~julian-liu
-// @version      1.8
+// @version      1.9
 // @description  LP bugs tags helper
 // @author       Julian Liu
 // @match        https://bugs.launchpad.net/*/+filebug
@@ -322,8 +322,8 @@ function addDueDate(data) {
             if (table.rows[i].cells[1].children.length > 1) {
                 var seriesName = table.rows[i].cells[1].children[1].innerHTML;
 
-                // Insert the due date at Hwe-* milestone td
-                if (seriesName.startsWith('Hwe-')) {
+                // Insert the due date at Hwe-* milestone td (if no milestone defined)
+                if (seriesName.startsWith('Hwe-') && milestoneCell.innerText.startsWith('Target to milestone')) {
                     while(milestoneCell.firstChild) {
                         milestoneCell.removeChild(milestoneCell.firstChild);
                     }
@@ -338,7 +338,8 @@ function addDueDate(data) {
             }
             else {
                 var seriesMain = table.rows[i].cells[1].children[0].children[0].children[0].innerText;
-                if(seriesMain.startsWith('somerville')) {
+                if(seriesMain.startsWith('somerville') || seriesMain.includes('Carson') || seriesMain.includes('Stella')) {
+                    if (!milestoneCell.innerText.startsWith('Target to milestone')) continue;
                     while(milestoneCell.firstChild) {
                         milestoneCell.removeChild(milestoneCell.firstChild);
                     }
@@ -382,7 +383,7 @@ function loadPlatformPlan(data) {
                         continue;
                     }
 
-                    if (milestone == 'A-CAN') {
+                    if (milestone == 'A-CAN' || milestone == 'GM' || milestone == 'A00') {
                         addDueDate(data[tagNameTrimmed][milestone]);
                     }
                     var landmarksData = {type: 'milestone', uri: ''};
