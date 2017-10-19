@@ -1,11 +1,13 @@
 // ==UserScript==
 // @name         Launchpad bug tags helper
 // @namespace    https://launchpad.net/~julian-liu
-// @version      1.9
+// @version      2.0
 // @description  LP bugs tags helper
 // @author       Julian Liu
 // @match        https://bugs.launchpad.net/*/+filebug
 // @match        https://bugs.launchpad.net/*/+bug/*
+// @match        https://*.launchpad.net/~oem-solutions-engineers/+branches*
+// @match        https://code.launchpad.net/~oem-solutions-engineers*
 // @connect      cedelivery.access.ly
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
@@ -446,6 +448,61 @@ function loadPlatformPlan(data) {
     }
 }
 
+function hookBranchFilter() {
+    LPJS.use('node', 'event', function(Y) {
+        Y.on('domready', function () {
+            var url = 'https://cedelivery.access.ly/branch.json?q=';
+            readExternalTags(url, function(text){
+                console.log('Branch list loaded');
+                container = Y.one('#branches-table-listing');
+                obj = Y.Node.create('<div id="branch-filter">Filter: <input id="branch-filter-text" size=60 value=""></div>');
+                container.insert(obj, Y.one('#branch-batch-links'));
+
+                branch_list = JSON.parse(text)['oem-solutions-engineers'];
+
+                Y.one('#branch-filter-text').on('change', function(e) {
+                    var val = e.currentTarget.get('value');
+                    console.log('search: "' + val + '" among ' + branch_list.length + ' branches');
+                    Y.all('#branchtable > tbody > tr').each(function(node) {
+                        // remove all rows
+                        node.remove();
+                    });
+                    Y.one('#branch-batch-links').hide();
+                    Y.all('.lower-batch-nav').hide();
+
+                    var tableBody = Y.one('#branchtable > tbody');
+                    for (let branch of branch_list) {
+                        // search against display name
+                        if (branch.display_name.includes(val)) {
+                            var revUrl = branch.web_link.replace('https://code.launchpad.net', 'https://bazaar.launchpad.net') + '/revision/' + branch.revision_count;
+                            var obj = `<tr>
+<td>
+<a class="sprite branch" href="${branch.web_link}">${branch.display_name}</a>
+</td>
+<td align="right" style="padding-right: 5px">
+<img alt="(Private)" width="14" height="14" src="/@@/private" title="Private">
+</td>
+<td>
+<span class="branchstatusDEVELOPMENT">Development</span>
+</td>
+<td>
+<span class="sortkey">${branch.date_last_modified}</span>
+<span title="${branch.date_last_modified}">${branch.date_last_modified}</span>
+<td>
+<div class="lastCommit">
+Rev: <a href="${revUrl}">${branch.revision_count}</a>.
+</div>
+</td>
+</tr>`;
+                            tableBody.append(obj);
+                        }
+                    }
+                });
+            });
+        });
+    });
+}
+
 (function() {
     'use strict';
 
@@ -460,6 +517,9 @@ function loadPlatformPlan(data) {
         tagNode.size = '40';
         tagList('filebug-form', 'field.tags', anchorNode);
         interceptorSetup();
+    }
+    else if (curUrl.includes('~oem-solutions-engineers') && (curUrl.includes('code.launchpad.net') || curUrl.includes('+branches'))) {
+        hookBranchFilter();
     }
     else {
         anchorNode = document.getElementById('bug-tags').childNodes[8];
