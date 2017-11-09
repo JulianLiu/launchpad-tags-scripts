@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Launchpad bug tags helper
 // @namespace    https://launchpad.net/~julian-liu
-// @version      2.1
+// @version      2.2
 // @description  LP bugs tags helper
 // @author       Julian Liu
 // @match        https://bugs.launchpad.net/*/+filebug
@@ -309,14 +309,14 @@ function setupOberver() {
     }
 }
 
-function addDueDate(data) {
+function addDueDate(data, milestone) {
     var table = document.getElementById('affected-software');
 
     for (var i = 1; i < table.rows.length; i = i + 2) {
         if (table.rows[i].cells.length) {
             var milestoneCell = table.rows[i].cells[5];
             var dueDiv = document.createElement('div');
-            var aCanDate = new Date(data);
+            var targetDate = new Date(data);
             var nowDate = new Date();
             var dueDate;
 
@@ -325,33 +325,97 @@ function addDueDate(data) {
                 var seriesName = table.rows[i].cells[1].children[1].innerHTML;
 
                 // Insert the due date at Hwe-* milestone td (if no milestone defined)
-                if (seriesName.startsWith('Hwe-') && milestoneCell.innerText.startsWith('Target to milestone')) {
-                    while(milestoneCell.firstChild) {
-                        milestoneCell.removeChild(milestoneCell.firstChild);
+                if (seriesName.startsWith('Hwe-')) {
+                    let oldDueDate;
+                    if (milestoneCell.innerText.startsWith('Target to milestone')) {
+                        // a future date
+                        oldDueDate = new Date('2099-12-31T00:00:00Z');
                     }
-                    // Due date is 14 days before A-CAN
-                    dueDate = new Date(aCanDate.getTime() - (14 * 24 * 60 * 60 * 1000));
-                    dueDiv.textContent = 'Due date: ' + dueDate.getFullYear() + '/' + (dueDate.getMonth() + 1) + '/' + dueDate.getDate();
-                    if (nowDate > dueDate) {
-                        dueDiv.style.color = 'Red';
+                    else if (milestoneCell.innerText.startsWith('Due date:')) {
+                        // save old due date to compare which one is closer
+                        oldDueDate = new Date(milestoneCell.innerText.substring(10, 20));
                     }
-                    milestoneCell.appendChild(dueDiv);
+                    else {
+                        // probally already had a LP milestone
+                        continue;
+                    }
+
+                    if (milestone == 'IEV Reg QA') {
+                        // IEV-R date
+                        dueDate = targetDate;
+                    }
+                    else {
+                        // unknown milestone
+                        dueDate = new Date('2100-12-31T00:00:00Z');
+                    }
+                    // if we have a earlier due date, update the column
+                    if (dueDate < oldDueDate) {
+                        while(milestoneCell.firstChild) {
+                            milestoneCell.removeChild(milestoneCell.firstChild);
+                        }
+                        dueDiv.textContent = 'Due date: ' + dueDate.getFullYear() + '/' + (dueDate.getMonth() + 1) + '/' + dueDate.getDate();
+                        if (nowDate > dueDate) {
+                            dueDiv.style.color = 'Red';
+                        }
+                        milestoneCell.appendChild(dueDiv);
+                        oldDueDate = dueDate;
+                    }
+                    // IEV-R already passed, append (A-CAN - 2 weeks) date
+                    if (nowDate > oldDueDate && milestone == 'A-CAN') {
+                        let aCanDate = new Date(targetDate.getTime() - (14 * 24 * 60 * 60 * 1000));
+                        let acanDueStr = aCanDate.getFullYear() + '/' + (aCanDate.getMonth() + 1) + '/' + aCanDate.getDate();
+                        let aCanDiv = document.createElement('div');
+                        if (milestoneCell.children.length > 1) {
+                            let oldACanDiv = milestoneCell.lastChild;
+                            let oldACanDate = new Date(oldACanDiv.innerText.substring(17, 27));
+                            if (aCanDate < oldACanDate) {
+                                milestoneCell.removeChild(oldACanDiv);
+                            }
+                        }
+                        // Update Acan date only if it's earlier
+                        if (milestoneCell.children.length == 1) {
+                            aCanDiv.textContent = 'A-CAN(-2 weeks): ' + acanDueStr;
+                            if (nowDate > aCanDate) {
+                                aCanDiv.style.color = 'Red';
+                            }
+                            milestoneCell.appendChild(aCanDiv);
+                        }
+                    }
                 }
             }
             else {
                 var seriesMain = table.rows[i].cells[1].children[0].children[0].children[0].innerText;
                 if(seriesMain.startsWith('somerville') || seriesMain.includes('Carson') || seriesMain.includes('Stella')) {
-                    if (!milestoneCell.innerText.startsWith('Target to milestone')) continue;
-                    while(milestoneCell.firstChild) {
-                        milestoneCell.removeChild(milestoneCell.firstChild);
+                    let oldDueDate;
+                    if (milestoneCell.innerText.startsWith('Target to milestone')) {
+                        // a future date
+                        oldDueDate = new Date('2099-12-31T00:00:00Z');
                     }
+                    else if (milestoneCell.innerText.startsWith('Due date:')) {
+                        // save old due date to compare which one is closer
+                        oldDueDate = new Date(milestoneCell.innerText.substring(10, 20));
+                    }
+                    else {
+                        // probally already had a LP milestone
+                        continue;
+                    }
+                    // IEV Reg QA only affects hwe
+                    if (milestone == 'IEV Reg QA') continue;
+
                     // Due date is 7 days before A-CAN
-                    dueDate = new Date(aCanDate.getTime() - (7 * 24 * 60 * 60 * 1000));
-                    dueDiv.textContent = 'Due date: ' + dueDate.getFullYear() + '/' + (dueDate.getMonth() + 1) + '/' + dueDate.getDate();
-                    if (nowDate > dueDate) {
-                        dueDiv.style.color = 'Red';
+                    dueDate = new Date(targetDate.getTime() - (7 * 24 * 60 * 60 * 1000));
+
+                    // if we have a earlier due date, update the column
+                    if (dueDate < oldDueDate) {
+                        while(milestoneCell.firstChild) {
+                            milestoneCell.removeChild(milestoneCell.firstChild);
+                        }
+                        dueDiv.textContent = 'Due date: ' + dueDate.getFullYear() + '/' + (dueDate.getMonth() + 1) + '/' + dueDate.getDate();
+                        if (nowDate > dueDate) {
+                            dueDiv.style.color = 'Red';
+                        }
+                        milestoneCell.appendChild(dueDiv);
                     }
-                    milestoneCell.appendChild(dueDiv);
                 }
             }
         }
@@ -385,8 +449,8 @@ function loadPlatformPlan(data) {
                         continue;
                     }
 
-                    if (milestone == 'A-CAN' || milestone == 'GM' || milestone == 'A00') {
-                        addDueDate(data[tagNameTrimmed][milestone]);
+                    if (milestone == 'A-CAN' || milestone == 'GM' || milestone == 'A00' || milestone == 'IEV Reg QA') {
+                        addDueDate(data[tagNameTrimmed][milestone], milestone);
                     }
                     var landmarksData = {type: 'milestone', uri: ''};
                     landmarksData.code_name = milestone;
