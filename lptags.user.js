@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Launchpad bug tags helper
 // @namespace    https://launchpad.net/~julian-liu
-// @version      2.2
+// @version      2.3
 // @description  LP bugs tags helper
 // @author       Julian Liu
 // @match        https://bugs.launchpad.net/*/+filebug
@@ -344,6 +344,10 @@ function addDueDate(data, milestone) {
                         // IEV-R date
                         dueDate = targetDate;
                     }
+                    else if (milestone == '[PRTS]A-CAN') {
+                        // Post RTS has no IEV-R, use [PRTS]A-CAN - 2 weeks as due date
+                        dueDate = new Date(targetDate.getTime() - (14 * 24 * 60 * 60 * 1000));
+                    }
                     else {
                         // unknown milestone
                         dueDate = new Date('2100-12-31T00:00:00Z');
@@ -449,7 +453,7 @@ function loadPlatformPlan(data) {
                         continue;
                     }
 
-                    if (milestone == 'A-CAN' || milestone == 'GM' || milestone == 'A00' || milestone == 'IEV Reg QA') {
+                    if (milestone == 'A-CAN' || milestone == 'GM' || milestone == 'A00' || milestone == 'IEV Reg QA' || milestone == '[PRTS]A-CAN') {
                         addDueDate(data[tagNameTrimmed][milestone], milestone);
                     }
                     var landmarksData = {type: 'milestone', uri: ''};
