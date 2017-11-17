@@ -1,7 +1,8 @@
 // ==UserScript==
 // @name         Launchpad bug tags helper
 // @namespace    https://launchpad.net/~julian-liu
-// @version      2.4
+// @version      2.5
+// @license      MIT
 // @description  LP bugs tags helper
 // @author       Julian Liu
 // @match        https://bugs.launchpad.net/*/+filebug
