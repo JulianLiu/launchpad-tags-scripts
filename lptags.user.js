@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Launchpad bug tags helper
 // @namespace    https://launchpad.net/~julian-liu
-// @version      2.5
+// @version      2.6
 // @license      MIT
 // @description  LP bugs tags helper
 // @author       Julian Liu
@@ -201,7 +201,7 @@ function tagList(formId, tagElement, targetNode) {
     var intTagurl = 'https://bugs.launchpad.net/somerville/+bug/1713956?q=';
     var pubTags = {
         ihv: ['ihv-amd', 'ihv-broadcom', 'ihv-intel', 'ihv-nvidia', 'ihv-realtek', 'ihv-qualcomm', 'ihv-emulex', 'ihv-alps', 'ihv-synaptics', 'ihv-unknown'],
-        status: ['task', 'staging', 'waiting', 'cqa-verified', 'not-fixed-at-gm']
+        status: ['task', 'staging', 'waiting', 'cqa-verified', 'not-fixed-at-gm', 'oem-no-hw']
     };
     var tagDiv = document.createElement('div');
     tagDiv.id = 'wrap';
@@ -349,6 +349,10 @@ function addDueDate(data, milestone) {
                         // Post RTS has no IEV-R, use [PRTS]A-CAN - 2 weeks as due date
                         dueDate = new Date(targetDate.getTime() - (14 * 24 * 60 * 60 * 1000));
                     }
+                    else if (milestone == 'GM') {
+                        // GM - 2 weeks as due date for hwe
+                        dueDate = new Date(targetDate.getTime() - (14 * 24 * 60 * 60 * 1000));
+                    }
                     else {
                         // unknown milestone
                         dueDate = new Date('2100-12-31T00:00:00Z');
@@ -390,7 +394,7 @@ function addDueDate(data, milestone) {
             }
             else {
                 var seriesMain = table.rows[i].cells[1].children[0].children[0].children[0].innerText;
-                if(seriesMain.startsWith('somerville') || seriesMain.includes('Carson') || seriesMain.includes('Stella')) {
+                if(seriesMain.startsWith('somerville') || seriesMain.includes('Carson') || seriesMain.includes('Stella') || seriesMain.startsWith('The Sutton Project')) {
                     let oldDueDate;
                     if (milestoneCell.innerText.startsWith('Target to milestone')) {
                         // a future date
