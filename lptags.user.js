@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Launchpad bug tags helper
 // @namespace    https://launchpad.net/~julian-liu
-// @version      2.6
+// @version      2.7
 // @license      MIT
 // @description  LP bugs tags helper
 // @author       Julian Liu
@@ -9,7 +9,9 @@
 // @match        https://bugs.launchpad.net/*/+bug/*
 // @match        https://*.launchpad.net/~oem-solutions-engineers/+branches*
 // @match        https://code.launchpad.net/~oem-solutions-engineers*
+// @match        https://*.launchpad.net/~*/*/+git/*/+ref/*
 // @connect      cedelivery.access.ly
+// @connect      bugs.launchpad.net
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
 
@@ -576,6 +578,75 @@ Rev: <a href="${revUrl}">${branch.revision_count}</a>.
     });
 }
 
+function linkGitLpBug() {
+    LPJS.use('node', 'event', function(Y) {
+        Y.on('domready', function () {
+            var url = 'https://cedelivery.access.ly/branch.json?q=';
+
+            // iterate all git commits to find LP: #xxxxxxx
+            var allBugs = [];
+            Y.all('.commit-message').each(function(node) {
+                var lpBugRegexp = /LP:\s+\#\d+(?:,\s*\#\d+)*/;
+                var commitContent = node.get('innerText');
+                var match = lpBugRegexp.exec(commitContent);
+                if (match != null) {
+                    for (let bugHash of match[0].substring(4).split(',')) {
+                        // trim space and #
+                        let bugNum = bugHash.replace(/^([#\s]*)|\s$/g, '');
+                        if (!allBugs.includes(bugNum)) {
+                            allBugs.push(bugNum);
+                        }
+                    }
+                }
+            });
+
+            var bugIndex = 0;
+            function fetchBugStatus() {
+                let bugNum = allBugs[bugIndex];
+                let bugUrl = "https://launchpad.net/bugs/" + bugNum;
+                readExternalTags(bugUrl, function(text){
+                    let doc = document.implementation.createHTMLDocument("");
+                    doc.documentElement.innerHTML = text;
+                    let title = 'Bug #' + bugNum + ': ' + doc.getElementById('edit-title').childNodes[1].textContent.replace(/^([\n\s]*)|([\n\s]*)$/g, '');
+                    let status = doc.getElementsByClassName('status-content')[0].textContent.replace(/^([\n\s]*)|([\n\s]*)$/g, '');
+                    let importance = doc.getElementsByClassName('importance-content')[0].textContent.replace(/^([\n\s]*)|([\n\s]*)$/g, '');
+                    let clsImportance = 'importance' + importance.toUpperCase();
+                    let clsStatus = 'status' + status.replace(/\s/g, '').toUpperCase();
+                    let bugNode = `
+<tr class="buglink-summary" id="buglink-${bugNum}">
+<td class="first"><a href="https://launchpad.net/bugs/${bugNum}" class="sprite bug-critical">${title}</a></td>
+<td><span class=${clsImportance}>${importance}</span></td>
+<td><span class=${clsStatus}>${status}</span></td>
+</tr>
+`;
+                    Y.one('#buglink-tbody').append(bugNode);
+                    if (bugIndex < allBugs.length - 1) {
+                        bugIndex += 1;
+                        fetchBugStatus();
+                    }
+                });
+            }
+            if (allBugs.length > 0)  fetchBugStatus();
+
+            var relBugNode = `<div id="related-bugs">
+<h3>Related bugs</h3>
+<div id="buglinks" class="actions">
+<div id="buglink-list">
+<table>
+<tbody id="buglink-tbody">
+</tbody>
+</table>
+</div>
+</div>
+</div>
+`;
+            obj = Y.Node.create(relBugNode);
+            container = Y.one('#ref-relations');
+            container.append(relBugNode);
+        });
+    });
+}
+
 (function() {
     'use strict';
 
@@ -593,6 +664,9 @@ Rev: <a href="${revUrl}">${branch.revision_count}</a>.
     }
     else if (curUrl.includes('~oem-solutions-engineers') && (curUrl.includes('code.launchpad.net') || curUrl.includes('+branches'))) {
         hookBranchFilter();
+    }
+    else if (curUrl.includes('launchpad.net') && curUrl.includes('+git') && curUrl.includes('+ref')) {
+        linkGitLpBug();
     }
     else {
         anchorNode = document.getElementById('bug-tags').childNodes[8];
