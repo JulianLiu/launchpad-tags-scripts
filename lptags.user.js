@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Launchpad bug tags helper
 // @namespace    https://launchpad.net/~julian-liu
-// @version      2.7
+// @version      2.8
 // @license      MIT
 // @description  LP bugs tags helper
 // @author       Julian Liu
@@ -581,8 +581,6 @@ Rev: <a href="${revUrl}">${branch.revision_count}</a>.
 function linkGitLpBug() {
     LPJS.use('node', 'event', function(Y) {
         Y.on('domready', function () {
-            var url = 'https://cedelivery.access.ly/branch.json?q=';
-
             // iterate all git commits to find LP: #xxxxxxx
             var allBugs = [];
             Y.all('.commit-message').each(function(node) {
