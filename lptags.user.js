@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Launchpad bug tags helper
 // @namespace    https://launchpad.net/~julian-liu
-// @version      2.8
+// @version      2.9
 // @license      MIT
 // @description  LP bugs tags helper
 // @author       Julian Liu
@@ -12,6 +12,7 @@
 // @match        https://*.launchpad.net/~*/*/+git/*/+ref/*
 // @connect      cedelivery.access.ly
 // @connect      bugs.launchpad.net
+// @connect      launchpad.net
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
 
@@ -660,11 +661,11 @@ function linkGitLpBug() {
         tagList('filebug-form', 'field.tags', anchorNode);
         interceptorSetup();
     }
-    else if (curUrl.includes('~oem-solutions-engineers') && (curUrl.includes('code.launchpad.net') || curUrl.includes('+branches'))) {
-        hookBranchFilter();
-    }
     else if (curUrl.includes('launchpad.net') && curUrl.includes('+git') && curUrl.includes('+ref')) {
         linkGitLpBug();
+    }
+    else if (curUrl.includes('~oem-solutions-engineers') && (curUrl.includes('code.launchpad.net') || curUrl.includes('+branches'))) {
+        hookBranchFilter();
     }
     else {
         anchorNode = document.getElementById('bug-tags').childNodes[8];
