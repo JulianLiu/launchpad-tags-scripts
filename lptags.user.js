@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Launchpad bug tags helper
 // @namespace    https://launchpad.net/~julian-liu
-// @version      2.9
+// @version      3.0
 // @license      MIT
 // @description  LP bugs tags helper
 // @author       Julian Liu
@@ -204,7 +204,7 @@ function tagList(formId, tagElement, targetNode) {
     var intTagurl = 'https://bugs.launchpad.net/somerville/+bug/1713956?q=';
     var pubTags = {
         ihv: ['ihv-amd', 'ihv-broadcom', 'ihv-intel', 'ihv-nvidia', 'ihv-realtek', 'ihv-qualcomm', 'ihv-emulex', 'ihv-alps', 'ihv-synaptics', 'ihv-unknown'],
-        status: ['task', 'staging', 'waiting', 'cqa-verified', 'not-fixed-at-gm', 'oem-no-hw']
+        status: ['bios-issue', 'task', 'staging', 'waiting', 'cqa-verified', 'not-fixed-at-gm', 'oem-no-hw']
     };
     var tagDiv = document.createElement('div');
     tagDiv.id = 'wrap';
